@@ -38,18 +38,7 @@
 </style>
 <template>
   <div class="home2" :style="{'background-color':bgColor}">
-    <transition name="fade" @after-enter="afterEnter1" @after-leave="afterLeave1">
-      <div v-if="show1" class="text-container">
-        <span v-for="(item,index) in text1" :key="index">{{item}}</span>
-      </div>
-    </transition>
-
-    <transition name="fade">
-      <div v-if="show2" class="text-container">
-        <span v-for="(item,index) in text2" :key="index">{{item}}</span>
-      </div>
-    </transition>
-
+   
   </div>
 </template>
 
@@ -78,6 +67,8 @@
         show3: false,
         show4: false,
         show5: false,
+
+
       }
     },
 

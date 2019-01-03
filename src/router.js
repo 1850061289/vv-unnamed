@@ -42,6 +42,14 @@ export default new Router({
       component: function(resolve){
         require(['./views/Test.vue'],resolve);
       }
+    },
+
+    {
+      path: '/qrcode',
+      name: 'qrcode',
+      component: function(resolve){
+        require(['./views/Qrcode.vue'],resolve);
+      }
     }
   ]
 })

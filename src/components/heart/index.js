@@ -128,6 +128,7 @@ export class Shapes {
   constructor(options) {
     this.canvas = options.elem;
     this.ctx = this.canvas.getContext("2d");
+    this.config = options.config;
 
     this.defaultConfig = {
       radiusMin: 1, // 初始半径最小值
@@ -138,16 +139,32 @@ export class Shapes {
       opacityMax: 0.5,
       opacitySubMin: 0.003,
       opacitySubMax: 0.005,
-      num: 3
+      num: 1
     };
 
     this.setup();
   }
 
+  extendConfig() {
+    const config = this.config;
+    for (let key in config) {
+      this.defaultConfig[key] = config[key] || this.defaultConfig[key];
+    }
+  }
+
   setup() {
+    this.extendConfig();
     window.addEventListener('resize', this.setCanvasSize.bind(this));
 
     this.setCanvasSize();
+
+    this.xSize = Math.ceil((this.canvas.width - 50) / 100);
+    this.ySize = Math.ceil((this.canvas.height - 50) / 100);
+
+    this.grid = new Grid({
+      xSize: this.xSize,
+      ySize: this.ySize
+    });
 
     this.generateHeart();
 
@@ -159,10 +176,7 @@ export class Shapes {
 
     var generate = () => {
       const time = randomBetween(500, 1000);
-      const num = randomBetween(1, 4);
-      for (let i = 0; i < num; i++) {
-        this.addHeart();
-      }
+      this.addTile();
       setTimeout(() => {
         generate();
       }, time)
@@ -175,8 +189,16 @@ export class Shapes {
   removeNode() {
     const hearts = [];
     for (let i = 0; i < this.hearts.length; i++) {
-      if (!this.hearts[i].needRemove) {
-        hearts.push(this.hearts[i]);
+      const h = this.hearts[i];
+      if (!h.needRemove) {
+        hearts.push(h);
+      } else {
+        this.grid.removeTile({
+          x: (h.x - 50) / 100,
+          y: (h.y - 50) / 100,
+          posX: h.x,
+          posY: h.y
+        });
       }
     }
     this.hearts = hearts;
@@ -209,11 +231,55 @@ export class Shapes {
     }
   }
 
-  addHeart() {
+  // 统计空格子
+  calcEmptyGrid() {
+    let emptyCells = [];
+    for (let i = 0; i < this.xSize; i++) {
+      for (let j = 0; j < this.ySize; j++) {
+        if (!this.grid.cells[i][j]) {
+          emptyCells.push({
+            x: i,
+            y: j
+          });
+        }
+      }
+    }
+    return emptyCells;
+  }
+
+  addTile() {
+
+    // 剩余空格子的位置存起来
+    const emptyCells = this.calcEmptyGrid();
+
+    // 空格子随机一个
+    const index = randomBetween(0, emptyCells.length);
+
+    const item = emptyCells[index];
+
+    if (item) {
+      const x = item.x;
+      const y = item.y;
+
+      const tile = new Tile({
+        x: x,
+        y: y,
+        posX: 50 + 100 * x,
+        posY: 50 + 100 * y
+      });
+
+      this.grid.insertTile(tile);
+      this.addHeart(tile);
+    }
+
+  }
+
+  addHeart(tile) {
+
     const config = this.defaultConfig;
     const heartConfig = {
-      x: randomBetween(0, this.canvas.width),
-      y: randomBetween(0, this.canvas.height),
+      x: tile.posX,
+      y: tile.posY,
       a: randomBetweenPrecision(config.radiusMin, config.radiusMax, 1),
       radiusChange: randomBetweenPrecision(config.radiusAddMin, config.radiusAddMax, 3),
       opacity: randomBetweenPrecision(config.opacityMin, config.opacityMax, 2),
@@ -228,5 +294,52 @@ export class Shapes {
   setCanvasSize() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+  }
+}
+
+class Grid {
+  constructor(opt) {
+    let cells = [];
+    for (let i = 0; i < opt.xSize; i++) {
+      cells.push([]);
+      for (let j = 0; j < opt.ySize; j++) {
+        cells[i].push(null);
+      }
+    }
+    this.cells = cells;
+  }
+
+  insertTile(tile) {
+    this.cells[tile.x][tile.y] = tile;
+  }
+
+  removeTile(tile) {
+    this.cells[tile.x][tile.y] = null;
+  }
+}
+
+class Tile {
+  constructor(opt) {
+    this.x = opt.x;
+    this.y = opt.y;
+    this.posX = opt.posX;
+    this.posY = opt.posY;
+  }
+
+  render() {
+
+    const heartConfig = {
+      x: tile.posX,
+      y: tile.posY,
+      a: randomBetweenPrecision(config.radiusMin, config.radiusMax, 1),
+      radiusChange: randomBetweenPrecision(config.radiusAddMin, config.radiusAddMax, 3),
+      opacity: randomBetweenPrecision(config.opacityMin, config.opacityMax, 2),
+      opacityChange: randomBetweenPrecision(config.opacitySubMin, config.opacitySubMax, 4),
+      fillColor: randomColor(),
+      ctx: this.ctx
+    };
+
+    const h = new Heart(heartConfig);
+    h.render();
   }
 }
