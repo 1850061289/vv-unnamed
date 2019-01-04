@@ -15,8 +15,6 @@ export default {
   data() {
     return {
       config: {
-        radiusAddMin: 0.02,
-        radiusAddMax: 0.03,
         num: 1
       }
     };
